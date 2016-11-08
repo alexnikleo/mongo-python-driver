@@ -481,6 +481,7 @@ URI_VALIDATORS = {
     'authsource': validate_string,
     'authmechanismproperties': validate_auth_mechanism_properties,
     'tz_aware': validate_boolean_or_string,
+    'use_unicode': validate_boolean,
     'uuidrepresentation': validate_uuid_representation,
     'connect': validate_boolean_or_string,
     'minpoolsize': validate_non_negative_integer,

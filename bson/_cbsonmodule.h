@@ -62,6 +62,7 @@ typedef int Py_ssize_t;
 
 typedef struct codec_options_t {
     PyObject* document_class;
+    unsigned char use_unicode;
     unsigned char tz_aware;
     unsigned char uuid_rep;
     char* unicode_decode_error_handler;

@@ -176,7 +176,6 @@ class Topology(object):
 
         with self._lock:
             self._description.check_compatible()
-
             now = _time()
             end_time = now + server_timeout
             server_descriptions = self._description.apply_selector(

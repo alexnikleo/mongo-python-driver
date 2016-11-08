@@ -158,9 +158,11 @@ class Monitor(object):
         address = self._server_description.address
         if self._publish:
             self._listeners.publish_server_heartbeat_started(address)
+
         with self._pool.get_socket({}) as sock_info:
             response, round_trip_time = self._check_with_socket(
                 sock_info, metadata=metadata)
+
             self._avg_round_trip_time.add_sample(round_trip_time)
             sd = ServerDescription(
                 address=address,
@@ -170,6 +172,7 @@ class Monitor(object):
                 self._listeners.publish_server_heartbeat_succeeded(
                     address, round_trip_time, response)
 
+
             return sd
 
     def _check_with_socket(self, sock_info, metadata=None):
@@ -178,12 +181,11 @@ class Monitor(object):
         Can raise ConnectionFailure or OperationFailure.
         """
         cmd = SON([('ismaster', 1)])
+
         if metadata is not None:
             cmd['client'] = metadata
         start = _time()
-        request_id, msg, max_doc_size = message.query(
-            0, 'admin.$cmd', 0, -1, cmd,
-            None, DEFAULT_CODEC_OPTIONS)
+        request_id, msg, max_doc_size = message.query(0, 'admin.$cmd', 0, -1, cmd, None, DEFAULT_CODEC_OPTIONS)
 
         # TODO: use sock_info.command()
         sock_info.send_message(msg, max_doc_size)

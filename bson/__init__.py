@@ -110,9 +110,12 @@ def _get_int(data, position, dummy0, dummy1, dummy2):
 
 def _get_c_string(data, position, opts):
     """Decode a BSON 'C' string to python unicode string."""
-    end = data.index(b"\x00", position)
-    return _utf_8_decode(data[position:end],
+    if opts.use_unicode:
+        end = data.index(b"\x00", position)
+        return _utf_8_decode(data[position:end],
                          opts.unicode_decode_error_handler, True)[0], end + 1
+    else:
+        return data[position:], len(data) - position
 
 
 def _get_float(data, position, dummy0, dummy1, dummy2):
@@ -127,11 +130,14 @@ def _get_string(data, position, obj_end, opts, dummy):
     position += 4
     if length < 1 or obj_end - position < length:
         raise InvalidBSON("invalid string length")
-    end = position + length - 1
-    if data[end:end + 1] != b"\x00":
-        raise InvalidBSON("invalid end of string")
-    return _utf_8_decode(data[position:end],
+    if opts.use_unicode:
+        end = position + length - 1
+        if data[end:end + 1] != b"\x00":
+            raise InvalidBSON("invalid end of string")
+        return _utf_8_decode(data[position:end],
                          opts.unicode_decode_error_handler, True)[0], end + 1
+    else:
+        return data[position:], len(data) - position
 
 
 def _get_object(data, position, obj_end, opts, dummy):
@@ -595,7 +601,10 @@ def _encode_regex(name, value, dummy0, dummy1):
 
 def _encode_code(name, value, dummy, opts):
     """Encode bson.code.Code."""
-    cstring = _make_c_string(value)
+    if opts.use_unicode:
+        cstring = _make_c_string(value)
+    else:
+        cstring = value
     cstrlen = len(cstring)
     if value.scope is None:
         return b"\x0D" + name + _PACK_INT(cstrlen) + cstring
@@ -738,8 +747,10 @@ def _element_to_bson(key, value, check_keys, opts):
             raise InvalidDocument("key %r must not start with '$'" % (key,))
         if "." in key:
             raise InvalidDocument("key %r must not contain '.'" % (key,))
-
-    name = _make_name(key)
+    if opts.use_unicode:
+        name = _make_name(key)
+    else:
+        name = key
     return _name_value_to_bson(name, value, check_keys, opts)
 
 

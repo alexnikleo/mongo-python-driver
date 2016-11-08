@@ -34,7 +34,7 @@ def _raw_document_class(document_class):
 
 _options_base = namedtuple(
     'CodecOptions',
-    ('document_class', 'tz_aware', 'uuid_representation',
+    ('document_class', 'use_unicode', 'tz_aware', 'uuid_representation',
      'unicode_decode_error_handler', 'tzinfo'))
 
 
@@ -45,6 +45,7 @@ class CodecOptions(_options_base):
       - `document_class`: BSON documents returned in queries will be decoded
         to an instance of this class. Must be a subclass of
         :class:`~collections.MutableMapping`. Defaults to :class:`dict`.
+      - `use_unicode`: If ``True``, BSON decode everything to unicode.
       - `tz_aware`: If ``True``, BSON datetimes will be decoded to timezone
         aware instances of :class:`~datetime.datetime`. Otherwise they will be
         naive. Defaults to ``False``.
@@ -65,7 +66,7 @@ class CodecOptions(_options_base):
        and stored back to the server.
     """
 
-    def __new__(cls, document_class=dict,
+    def __new__(cls, document_class=dict, use_unicode=True,
                 tz_aware=False, uuid_representation=PYTHON_LEGACY,
                 unicode_decode_error_handler="strict",
                 tzinfo=None):
@@ -74,6 +75,8 @@ class CodecOptions(_options_base):
             raise TypeError("document_class must be dict, bson.son.SON, "
                             "bson.raw_bson.RawBSONDocument, or a "
                             "sublass of collections.MutableMapping")
+        if not isinstance(use_unicode, bool):
+            raise TypeError("use_unicode must be True or False")
         if not isinstance(tz_aware, bool):
             raise TypeError("tz_aware must be True or False")
         if uuid_representation not in ALL_UUID_REPRESENTATIONS:
@@ -91,7 +94,7 @@ class CodecOptions(_options_base):
                     "cannot specify tzinfo without also setting tz_aware=True")
 
         return tuple.__new__(
-            cls, (document_class, tz_aware, uuid_representation,
+            cls, (document_class, use_unicode, tz_aware, uuid_representation,
                   unicode_decode_error_handler, tzinfo))
 
     def _arguments_repr(self):
@@ -103,9 +106,9 @@ class CodecOptions(_options_base):
         uuid_rep_repr = UUID_REPRESENTATION_NAMES.get(self.uuid_representation,
                                                       self.uuid_representation)
 
-        return ('document_class=%s, tz_aware=%r, uuid_representation='
+        return ('document_class=%s, use_unicode=%r, tz_aware=%r, uuid_representation='
                 '%s, unicode_decode_error_handler=%r, tzinfo=%r' %
-                (document_class_repr, self.tz_aware, uuid_rep_repr,
+                (document_class_repr, self.use_unicode, self.tz_aware, uuid_rep_repr,
                  self.unicode_decode_error_handler, self.tzinfo))
 
     def __repr__(self):
@@ -120,6 +123,8 @@ def _parse_codec_options(options):
     return CodecOptions(
         document_class=options.get(
             'document_class', DEFAULT_CODEC_OPTIONS.document_class),
+        use_unicode=options.get(
+            'use_unicode', DEFAULT_CODEC_OPTIONS.use_unicode),
         tz_aware=options.get(
             'tz_aware', DEFAULT_CODEC_OPTIONS.tz_aware),
         uuid_representation=options.get(

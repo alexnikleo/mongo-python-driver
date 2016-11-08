@@ -197,6 +197,7 @@ class JSONOptions(CodecOptions):
                 datetime_representation=DatetimeRepresentation.LEGACY,
                 strict_uuid=False, *args, **kwargs):
         kwargs["tz_aware"] = kwargs.get("tz_aware", True)
+        kwargs["use_unicode"] = kwargs.get("use_unicode", True)
         if kwargs["tz_aware"]:
             kwargs["tzinfo"] = kwargs.get("tzinfo", utc)
         if datetime_representation not in (DatetimeRepresentation.LEGACY,

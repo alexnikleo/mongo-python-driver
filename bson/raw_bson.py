@@ -49,6 +49,7 @@ class RawBSONDocument(collections.Mapping):
         co = codec_options
         self.__codec_options = CodecOptions(
             tz_aware=co.tz_aware,
+            use_unicode=co.use_unicode,
             document_class=RawBSONDocument,
             uuid_representation=co.uuid_representation,
             unicode_decode_error_handler=co.unicode_decode_error_handler,

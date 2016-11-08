@@ -74,13 +74,14 @@ class MongoClient(common.BaseObject):
     PORT = 27017
     # Define order to retrieve options from ClientOptions for __repr__.
     # No host/port; these are retrieved from TopologySettings.
-    _constructor_args = ('document_class', 'tz_aware', 'connect')
+    _constructor_args = ('document_class', 'use_unicode', 'tz_aware', 'connect')
 
     def __init__(
             self,
             host=None,
             port=None,
             document_class=dict,
+            use_unicode=None,
             tz_aware=None,
             connect=None,
             **kwargs):
@@ -409,10 +410,13 @@ class MongoClient(common.BaseObject):
 
         keyword_opts = kwargs
         keyword_opts['document_class'] = document_class
+        if use_unicode is None:
+            use_unicode = opts.get('use_unicode', True)
         if tz_aware is None:
             tz_aware = opts.get('tz_aware', False)
         if connect is None:
             connect = opts.get('connect', True)
+        keyword_opts['use_unicode'] = use_unicode
         keyword_opts['tz_aware'] = tz_aware
         keyword_opts['connect'] = connect
         # Validate all keyword options.

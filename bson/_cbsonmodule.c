@@ -452,8 +452,9 @@ int convert_codec_options(PyObject* options_obj, void* p) {
     codec_options_t* options = (codec_options_t*)p;
     long type_marker;
     options->unicode_decode_error_handler = NULL;
-    if (!PyArg_ParseTuple(options_obj, "ObbzO",
+    if (!PyArg_ParseTuple(options_obj, "ObbbzO",
                           &options->document_class,
+                          &options->use_unicode,
                           &options->tz_aware,
                           &options->uuid_rep,
                           &options->unicode_decode_error_handler,
@@ -1736,9 +1737,15 @@ static PyObject* get_value(PyObject* self, PyObject* name, const char* buffer,
             if (buffer[*position + value_length - 1]) {
                 goto invalid;
             }
-            value = PyUnicode_DecodeUTF8(
-                buffer + *position, value_length - 1,
-                options->unicode_decode_error_handler);
+            if (options->use_unicode) {
+                value = PyUnicode_DecodeUTF8(
+                    buffer + *position, value_length - 1,
+                    options->unicode_decode_error_handler);
+            } else {
+                value = PyString_FromStringAndSize(
+                    buffer + *position, value_length - 1);
+            }
+
             if (!value) {
                 goto invalid;
             }
@@ -2475,9 +2482,16 @@ static PyObject* get_value(PyObject* self, PyObject* name, const char* buffer,
                             PyObject* lmsg = PyUnicode_Concat(left, repr);
                             Py_DECREF(left);
                             if (lmsg) {
-                                PyObject* errmsg = PyUnicode_FromFormat(
-                                    "%U for fieldname '%U'. Are you using the "
-                                    "latest driver version?", lmsg, name);
+                                PyObject* errmsg;
+                                if (options->use_unicode) {
+                                    errmsg = PyUnicode_FromFormat(
+                                        "%U for fieldname '%U'. Are you using the "
+                                        "latest driver version?", lmsg, name);
+                                } else {
+                                     errmsg = PyUnicode_FromFormat(
+                                        "%U for fieldname '%S'. Are you using the "
+                                        "latest driver version?", lmsg, name);                                   
+                                }
                                 if (errmsg) {
                                     PyErr_SetObject(InvalidBSON, errmsg);
                                     Py_DECREF(errmsg);
@@ -2570,9 +2584,14 @@ static int _element_to_dict(PyObject* self, const char* string,
         }
         return -1;
     }
-    *name = PyUnicode_DecodeUTF8(
-        string + position, name_length,
-        options->unicode_decode_error_handler);
+    if (options->use_unicode) {
+        *name = PyUnicode_DecodeUTF8(
+            string + position, name_length,
+            options->unicode_decode_error_handler);
+    } else {
+        *name = PyString_FromStringAndSize(
+            string + position, name_length);
+    }
     if (!*name) {
         /* If NULL is returned then wrap the UnicodeDecodeError
            in an InvalidBSON error */

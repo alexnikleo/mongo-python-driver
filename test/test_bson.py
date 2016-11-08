@@ -902,7 +902,7 @@ class TestCodecOptions(unittest.TestCase):
         self.assertEqual(tz, CodecOptions(tz_aware=True, tzinfo=tz).tzinfo)
 
     def test_codec_options_repr(self):
-        r = ("CodecOptions(document_class=dict, tz_aware=False, "
+        r = ("CodecOptions(document_class=dict, use_unicode=True, tz_aware=False, "
              "uuid_representation=PYTHON_LEGACY, "
              "unicode_decode_error_handler='strict', "
              "tzinfo=None)")
